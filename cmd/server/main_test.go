@@ -50,7 +50,7 @@ func TestHandler(t *testing.T) {
 			name: "Wrong value",
 			args: args{
 				url:        "/update/gauge/dummy/42fake/",
-				statusCode: http.StatusNotFound,
+				statusCode: http.StatusBadRequest,
 				method:     http.MethodPost,
 			},
 		},

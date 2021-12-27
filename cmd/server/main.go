@@ -15,10 +15,10 @@ const (
 	addr = "127.0.0.1:8080"
 )
 
-var RE_METRIC_ROUTE = regexp.MustCompile(`^/update/([a-z]+)/([a-z]+)/([0-9]+\.[0-9]+|[0-9]+)/?$`)
+var metricRoute = regexp.MustCompile(`^/update/([a-z]+)/([a-zA-Z]+)/([a-zA-Z0-9\.]+)/?$`)
 
 func Handler(svc *serverstats.Processor, w http.ResponseWriter, r *http.Request) {
-	data := RE_METRIC_ROUTE.FindStringSubmatch(r.RequestURI)
+	data := metricRoute.FindStringSubmatch(r.RequestURI)
 	if len(data) != 4 {
 		http.NotFound(w, r)
 		return
