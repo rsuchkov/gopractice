@@ -35,7 +35,7 @@ func Handler(svc *serverstats.Processor, w http.ResponseWriter, r *http.Request)
 	}
 	er := svc.SaveMetric(name, mtype, value)
 	if er != nil {
-		http.Error(w, "Wrong metric value", http.StatusBadRequest)
+		http.Error(w, "Wrong metric value", http.StatusNotImplemented)
 		return
 	}
 	w.Write([]byte("ok"))

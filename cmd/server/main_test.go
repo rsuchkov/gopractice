@@ -41,8 +41,8 @@ func TestHandler(t *testing.T) {
 		{
 			name: "Wrong metric type",
 			args: args{
-				url:        "/update/doesnotexist/dummy/1/",
-				statusCode: http.StatusBadRequest,
+				url:        "/update/unknown/dummy/1/",
+				statusCode: http.StatusNotImplemented,
 				method:     http.MethodPost,
 			},
 		},
