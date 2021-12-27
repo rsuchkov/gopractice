@@ -18,10 +18,6 @@ const (
 )
 
 func main() {
-	// var m Monitor
-	// f := func() { SendMetrics(3, &m) }
-	// time.AfterFunc(0, f)
-	// RuntimeMonitor(2, &m)
 	st, err := memory.New()
 	if err != nil {
 		fmt.Println(err)
@@ -46,7 +42,7 @@ func main() {
 		for sig := range sigCh {
 			log.Println("Recieved sig:", sig)
 			tickPoll.Stop()
-			//tickReport.Stop()
+			tickReport.Stop()
 			close(done)
 			return
 		}
