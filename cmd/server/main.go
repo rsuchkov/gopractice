@@ -42,7 +42,12 @@ func GetMetricHandler(svc *serverstats.Processor, w http.ResponseWriter, r *http
 		http.Error(w, "Doesn't exist", http.StatusNotFound)
 		return
 	}
-	w.Write([]byte(fmt.Sprintf("%f", v)))
+	if mtype == model.MetricTypeGauge {
+		w.Write([]byte(fmt.Sprint(v)))
+	} else {
+		w.Write([]byte(fmt.Sprint(int(v))))
+	}
+
 }
 
 func GetMetricsHandler(svc *serverstats.Processor, w http.ResponseWriter, r *http.Request) {
