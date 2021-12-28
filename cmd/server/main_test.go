@@ -114,6 +114,7 @@ func TestHandler(t *testing.T) {
 			defer ts.Close()
 
 			resp, _ := testRequest(t, ts, tt.args.method, tt.args.url)
+			defer resp.Body.Close()
 			assert.Equal(t, tt.args.statusCode, resp.StatusCode)
 
 		})
