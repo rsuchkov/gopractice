@@ -2,15 +2,32 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/rsuchkov/gopractice/service/serverstats"
 	"github.com/rsuchkov/gopractice/storage/memory"
 )
+
+func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
+	req, err := http.NewRequest(method, ts.URL+path, nil)
+	require.NoError(t, err)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	defer resp.Body.Close()
+
+	return resp, string(respBody)
+}
 
 func TestHandler(t *testing.T) {
 	type args struct {
@@ -25,7 +42,7 @@ func TestHandler(t *testing.T) {
 		{
 			name: "Wrong method test",
 			args: args{
-				url:        "/update/gauge/dummy/1/",
+				url:        "/update/gauge/dummy/1",
 				statusCode: http.StatusMethodNotAllowed,
 				method:     http.MethodGet,
 			},
@@ -41,7 +58,7 @@ func TestHandler(t *testing.T) {
 		{
 			name: "Wrong metric type",
 			args: args{
-				url:        "/update/unknown/dummy/1/",
+				url:        "/update/unknown/dummy/1",
 				statusCode: http.StatusNotImplemented,
 				method:     http.MethodPost,
 			},
@@ -49,7 +66,7 @@ func TestHandler(t *testing.T) {
 		{
 			name: "Wrong value",
 			args: args{
-				url:        "/update/gauge/dummy/42fake/",
+				url:        "/update/gauge/dummy/42fake",
 				statusCode: http.StatusBadRequest,
 				method:     http.MethodPost,
 			},
@@ -81,8 +98,6 @@ func TestHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(tt.args.method, tt.args.url, nil)
-			w := httptest.NewRecorder()
 			st, err := memory.New()
 			if err != nil {
 				fmt.Println(err)
@@ -93,13 +108,13 @@ func TestHandler(t *testing.T) {
 				fmt.Println(err)
 				return
 			}
-			h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				Handler(svc, w, r)
-			})
-			h.ServeHTTP(w, request)
-			res := w.Result()
-			assert.Equal(t, tt.args.statusCode, res.StatusCode)
-			defer res.Body.Close()
+
+			r := NewRouter(svc)
+			ts := httptest.NewServer(r)
+			defer ts.Close()
+
+			resp, _ := testRequest(t, ts, tt.args.method, tt.args.url)
+			assert.Equal(t, tt.args.statusCode, resp.StatusCode)
 
 		})
 	}
