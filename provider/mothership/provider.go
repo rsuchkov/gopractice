@@ -33,10 +33,15 @@ func New(serverURI string) (*Provider, error) {
 func (p *Provider) SendMetric(metric model.Metric) (retErr error) {
 	data := url.Values{}
 
-	endpoint := fmt.Sprintf("update/%s/%s/%f", metric.MetricType, metric.Name, metric.Value)
-	endpoint = path.Join(p.serverURI, endpoint)
+	serverAPI, err := url.Parse(p.serverURI)
+	if err != nil {
+		return fmt.Errorf("incorrect server uri: %s", p.serverURI)
+	}
 
-	request, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(data.Encode()))
+	endpoint := fmt.Sprintf("update/%s/%s/%f", metric.MetricType, metric.Name, metric.Value)
+	serverAPI.Path = path.Join(serverAPI.Path, endpoint)
+
+	request, err := http.NewRequest(http.MethodPost, serverAPI.String(), bytes.NewBufferString(data.Encode()))
 	if err != nil {
 		return err
 	}
