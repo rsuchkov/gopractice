@@ -32,15 +32,20 @@ func genKey(name string, mtype model.MetricType) string {
 	return fmt.Sprintf("%s-%s", name, mtype)
 }
 
-func (st *Storage) SaveMetric(name string, mtype model.MetricType, value float64) {
-	st.metrics.mu.Lock()
-	defer st.metrics.mu.Unlock()
-
+// A private function for storing metrics in memory.
+// Important: the function is not thread safe!
+func (st *Storage) saveMetric(name string, mtype model.MetricType, value float64) {
 	st.metrics.Metrics[genKey(name, mtype)] = model.Metric{
 		Name:       name,
 		MetricType: mtype,
 		Value:      value,
 	}
+}
+
+func (st *Storage) SaveMetric(name string, mtype model.MetricType, value float64) {
+	st.metrics.mu.Lock()
+	defer st.metrics.mu.Unlock()
+	st.saveMetric(name, mtype, value)
 }
 
 func (st *Storage) GetMetrics() map[string]model.Metric {
@@ -57,11 +62,14 @@ func (st *Storage) GetMetric(name string, mtype model.MetricType) (model.Metric,
 
 func (st *Storage) IncMetric(name string, mtype model.MetricType, value float64) error {
 
+	st.metrics.mu.Lock()
+	defer st.metrics.mu.Unlock()
+
 	m, ok := st.GetMetric(name, mtype)
 	if !ok {
-		st.SaveMetric(name, mtype, value)
+		st.saveMetric(name, mtype, value)
 	} else {
-		st.SaveMetric(name, mtype, value+m.Value)
+		st.saveMetric(name, mtype, value+m.Value)
 
 	}
 	return nil
