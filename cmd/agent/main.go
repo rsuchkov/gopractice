@@ -20,12 +20,19 @@ const (
 func main() {
 	st, err := memory.New()
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 		return
 	}
 	svc, err := agentstats.New(agentstats.WithStatsStorage(st))
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
+		return
+	}
+
+	// Report every 10s
+	client, err := mothership.New(server)
+	if err != nil {
+		log.Fatal(err)
 		return
 	}
 
@@ -60,8 +67,6 @@ func main() {
 		}
 	}()
 
-	// Report every 10s
-	client := mothership.New(server)
 	for {
 		select {
 		case <-done:
@@ -74,15 +79,12 @@ func main() {
 					return
 				default:
 					time.Sleep(500 * time.Microsecond)
-					resp, err := client.SendMetric(v)
+					err := client.SendMetric(v)
 
 					if err != nil {
 						log.Println(err)
 						log.Println("Failed to send", v.Name)
 
-					}
-					if resp != 0 {
-						log.Println(resp, v.Name)
 					}
 				}
 			}

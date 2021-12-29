@@ -3,46 +3,56 @@ package mothership
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 
 	"github.com/rsuchkov/gopractice/model"
 )
 
 type Provider struct {
-	client http.Client
-	server string
+	client    http.Client
+	serverURI string
 }
 
 // New returns a new Provider instance.
-func New(server string) *Provider {
-	provider := &Provider{
-		client: http.Client{},
-		server: server,
+func New(serverURI string) (*Provider, error) {
+	_, err := url.ParseRequestURI(serverURI)
+	if err != nil {
+		return nil, fmt.Errorf("incorrect server uri: %s", serverURI)
 	}
-	return provider
+	provider := &Provider{
+		client:    http.Client{},
+		serverURI: serverURI,
+	}
+
+	return provider, nil
 }
 
-func (p *Provider) SendMetric(metric model.Metric) (statsuCode int, retErr error) {
+func (p *Provider) SendMetric(metric model.Metric) (retErr error) {
 	data := url.Values{}
-	endpoint := fmt.Sprintf("%supdate/%s/%s/%f", p.server, metric.MetricType, metric.Name, metric.Value)
+
+	endpoint := fmt.Sprintf("update/%s/%s/%f", metric.MetricType, metric.Name, metric.Value)
+	endpoint = path.Join(p.serverURI, endpoint)
+
 	request, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBufferString(data.Encode()))
 	if err != nil {
-		return 0, err
+		return err
 	}
+
 	request.Header.Add("application-type", "text/plain")
 	request.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 	response, err := p.client.Do(request)
 	if err != nil {
-		return 0, err
+		return err
 	}
+
 	defer response.Body.Close()
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return 0, err
+
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("statusCode received (%d), but (%d) expected", response.StatusCode, http.StatusOK)
 	}
-	fmt.Println(string(body))
-	return response.StatusCode, nil
+
+	return nil
 }

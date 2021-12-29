@@ -8,7 +8,7 @@ import (
 
 type (
 	Storage struct {
-		metrics model.AgentStats
+		metrics AgentStats
 	}
 
 	StorageOption func(st *Storage) error
@@ -16,7 +16,7 @@ type (
 
 func New(opts ...StorageOption) (*Storage, error) {
 	st := &Storage{
-		metrics: model.AgentStats{
+		metrics: AgentStats{
 			Metrics: make(map[string]model.Metric),
 		},
 	}
@@ -33,6 +33,9 @@ func genKey(name string, mtype model.MetricType) string {
 }
 
 func (st *Storage) SaveMetric(name string, mtype model.MetricType, value float64) {
+	st.metrics.mu.Lock()
+	defer st.metrics.mu.Unlock()
+
 	st.metrics.Metrics[genKey(name, mtype)] = model.Metric{
 		Name:       name,
 		MetricType: mtype,
@@ -44,10 +47,22 @@ func (st *Storage) GetMetrics() map[string]model.Metric {
 	return st.metrics.Metrics
 }
 
-func (st *Storage) GetMetric(name string, mtype model.MetricType) (model.Metric, error) {
+func (st *Storage) GetMetric(name string, mtype model.MetricType) (model.Metric, bool) {
 	i, ok := st.metrics.Metrics[genKey(name, mtype)]
 	if !ok {
-		return model.Metric{}, fmt.Errorf("metric %s with type %s not found", name, mtype)
+		return model.Metric{}, false
 	}
-	return i, nil
+	return i, true
+}
+
+func (st *Storage) IncMetric(name string, mtype model.MetricType, value float64) error {
+
+	m, ok := st.GetMetric(name, mtype)
+	if !ok {
+		st.SaveMetric(name, mtype, value)
+	} else {
+		st.SaveMetric(name, mtype, value+m.Value)
+
+	}
+	return nil
 }

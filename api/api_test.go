@@ -1,8 +1,8 @@
-package main
+package api
 
 import (
-	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -100,12 +100,12 @@ func TestHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			st, err := memory.New()
 			if err != nil {
-				fmt.Println(err)
+				log.Fatal(err)
 				return
 			}
 			svc, err := serverstats.New(serverstats.WithStatsStorage(st))
 			if err != nil {
-				fmt.Println(err)
+				log.Fatal(err)
 				return
 			}
 

@@ -1,6 +1,8 @@
 package serverstats
 
 import (
+	"fmt"
+
 	"github.com/rsuchkov/gopractice/model"
 )
 
@@ -10,29 +12,28 @@ func (svc *Processor) SaveMetric(name string, mtype model.MetricType, value floa
 		return err
 	}
 
-	if mtype == model.MetricTypeGauge {
+	switch mtype {
+	case model.MetricTypeGauge:
 		svc.statsStorage.SaveMetric(name, mtype, value)
-	} else { // model.MetricTypeCounter
-		m, err := svc.statsStorage.GetMetric(name, mtype)
-		if err != nil {
-			svc.statsStorage.SaveMetric(name, mtype, value)
-		} else {
-			svc.statsStorage.SaveMetric(name, mtype, value+m.Value)
-		}
+	case model.MetricTypeCounter:
+		svc.statsStorage.IncMetric(name, mtype, value)
+	default:
+		return fmt.Errorf("unknown metric type: %s", mtype)
 	}
 
 	return nil
 }
 
 func (svc *Processor) GetMetric(name string, mtype model.MetricType) (float64, error) {
-	err := mtype.Validate()
-	if err != nil {
+	if err := mtype.Validate(); err != nil {
 		return 0, err
 	}
-	m, err := svc.statsStorage.GetMetric(name, mtype)
-	if err != nil {
-		return 0, err
+
+	m, ok := svc.statsStorage.GetMetric(name, mtype)
+	if !ok {
+		return 0, fmt.Errorf("metric %s with type %s doesn't exist", name, mtype)
 	}
+
 	return m.Value, nil
 }
 
