@@ -19,9 +19,11 @@ func UpdateMetricHandler(svc *serverstats.Processor, w http.ResponseWriter, r *h
 		return
 	}
 
-	if m.Value == nil {
+	if m.Value == nil && m.MType == model.MetricTypeGauge {
 		http.Error(w, "Field Value has to be set", http.StatusBadRequest)
 		return
+	} else if m.Value == nil && m.MType == model.MetricTypeCounter {
+		*m.Value = 0
 	}
 
 	ret, er := svc.SaveMetric(m)
