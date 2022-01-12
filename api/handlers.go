@@ -20,7 +20,8 @@ func UpdateMetricHandler(svc *serverstats.Processor, w http.ResponseWriter, r *h
 		http.Error(w, "Wrong metric value", http.StatusBadRequest)
 		return
 	}
-	er := svc.SaveMetric(name, mtype, value)
+	m := model.Metric{ID: name, MType: mtype, Value: &value}
+	_, er := svc.SaveMetric(m)
 	if er != nil {
 		http.Error(w, "Wrong metric value", http.StatusNotImplemented)
 		return
@@ -36,9 +37,9 @@ func GetMetricHandler(svc *serverstats.Processor, w http.ResponseWriter, r *http
 		return
 	}
 	if mtype == model.MetricTypeGauge {
-		w.Write([]byte(fmt.Sprint(v)))
+		w.Write([]byte(fmt.Sprint(*v.Value)))
 	} else {
-		w.Write([]byte(fmt.Sprint(int(v))))
+		w.Write([]byte(fmt.Sprint(int(*v.Value))))
 	}
 
 }

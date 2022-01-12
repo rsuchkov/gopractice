@@ -24,5 +24,8 @@ func NewRouter(svc *serverstats.Processor) chi.Router {
 	r.Post("/update", func(rw http.ResponseWriter, r *http.Request) {
 		UpdateMetricHandler(svc, rw, r)
 	}) // this looks quite stupid, but I couldnt find a way to do it correct
+	r.Post("/value/", func(rw http.ResponseWriter, r *http.Request) {
+		GetMetricHandler(svc, rw, r)
+	})
 	return r
 }
