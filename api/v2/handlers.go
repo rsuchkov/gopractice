@@ -19,6 +19,11 @@ func UpdateMetricHandler(svc *serverstats.Processor, w http.ResponseWriter, r *h
 		return
 	}
 
+	if m.Value == nil {
+		http.Error(w, "Field Value has to be set", http.StatusBadRequest)
+		return
+	}
+
 	ret, er := svc.SaveMetric(m)
 	if er != nil {
 		http.Error(w, "Wrong metric value", http.StatusNotImplemented)
@@ -29,6 +34,7 @@ func UpdateMetricHandler(svc *serverstats.Processor, w http.ResponseWriter, r *h
 		http.Error(w, "Wrong data", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Add("Content-Type", "application/json")
 	w.Write([]byte(string(v)))
 }
 
@@ -58,6 +64,7 @@ func GetMetricHandler(svc *serverstats.Processor, w http.ResponseWriter, r *http
 		http.Error(w, "Wrong data", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Add("Content-Type", "application/json")
 	w.Write([]byte(string(v)))
 
 }
