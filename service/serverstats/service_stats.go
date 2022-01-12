@@ -6,7 +6,7 @@ import (
 	"github.com/rsuchkov/gopractice/model"
 )
 
-func (svc *Processor) SaveMetric(name string, mtype model.MetricType, value float64) error {
+func (svc *Processor) SaveMetric(name string, mtype model.MType, value float64) error {
 	err := mtype.Validate()
 	if err != nil {
 		return err
@@ -24,7 +24,19 @@ func (svc *Processor) SaveMetric(name string, mtype model.MetricType, value floa
 	return nil
 }
 
-func (svc *Processor) GetMetric(name string, mtype model.MetricType) (float64, error) {
+func (svc *Processor) SaveMetric_v2(m model.Metric) (model.Metric, error) {
+
+	switch m.MType {
+	case model.MetricTypeGauge:
+		return svc.statsStorage.SaveMetric(m.ID, m.MType, *m.Value)
+	case model.MetricTypeCounter:
+		return svc.statsStorage.IncMetric(m.ID, m.MType, *m.Value)
+	default:
+		return model.Metric{}, fmt.Errorf("unknown metric type: %s", m.MType)
+	}
+}
+
+func (svc *Processor) GetMetric(name string, mtype model.MType) (float64, error) {
 	if err := mtype.Validate(); err != nil {
 		return 0, err
 	}
@@ -34,7 +46,7 @@ func (svc *Processor) GetMetric(name string, mtype model.MetricType) (float64, e
 		return 0, fmt.Errorf("metric %s with type %s doesn't exist", name, mtype)
 	}
 
-	return m.Value, nil
+	return *m.Value, nil
 }
 
 func (svc *Processor) GetMetrics() ([]model.Metric, error) {

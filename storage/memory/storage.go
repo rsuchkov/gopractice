@@ -28,31 +28,33 @@ func New(opts ...StorageOption) (*Storage, error) {
 
 	return st, nil
 }
-func genKey(name string, mtype model.MetricType) string {
+func genKey(name string, mtype model.MType) string {
 	return fmt.Sprintf("%s-%s", name, mtype)
 }
 
 // A private function for storing metrics in memory.
 // Important: the function is not thread safe!
-func (st *Storage) saveMetric(name string, mtype model.MetricType, value float64) {
-	st.metrics.Metrics[genKey(name, mtype)] = model.Metric{
-		Name:       name,
-		MetricType: mtype,
-		Value:      value,
+func (st *Storage) saveMetric(name string, mtype model.MType, value float64) (model.Metric, error) {
+	m := model.Metric{
+		ID:    name,
+		MType: mtype,
+		Value: &value,
 	}
+	st.metrics.Metrics[genKey(name, mtype)] = m
+	return m, nil
 }
 
-func (st *Storage) SaveMetric(name string, mtype model.MetricType, value float64) {
+func (st *Storage) SaveMetric(name string, mtype model.MType, value float64) (model.Metric, error) {
 	st.metrics.mu.Lock()
 	defer st.metrics.mu.Unlock()
-	st.saveMetric(name, mtype, value)
+	return st.saveMetric(name, mtype, value)
 }
 
 func (st *Storage) GetMetrics() map[string]model.Metric {
 	return st.metrics.Metrics
 }
 
-func (st *Storage) GetMetric(name string, mtype model.MetricType) (model.Metric, bool) {
+func (st *Storage) GetMetric(name string, mtype model.MType) (model.Metric, bool) {
 	i, ok := st.metrics.Metrics[genKey(name, mtype)]
 	if !ok {
 		return model.Metric{}, false
@@ -60,17 +62,28 @@ func (st *Storage) GetMetric(name string, mtype model.MetricType) (model.Metric,
 	return i, true
 }
 
-func (st *Storage) IncMetric(name string, mtype model.MetricType, value float64) error {
+func (st *Storage) IncMetric(name string, mtype model.MType, value float64) (model.Metric, error) {
 
 	st.metrics.mu.Lock()
 	defer st.metrics.mu.Unlock()
 
 	m, ok := st.GetMetric(name, mtype)
+	var ret model.Metric
 	if !ok {
-		st.saveMetric(name, mtype, value)
+		m, err := st.saveMetric(name, mtype, value)
+		if err != nil {
+			return ret, err
+		}
+		ret = m
 	} else {
-		st.saveMetric(name, mtype, value+m.Value)
+		m, err := st.saveMetric(name, mtype, value+*m.Value)
+		if err != nil {
+			return ret, err
+		}
+		ret = m
 
 	}
-	return nil
+	delta := int64(*ret.Value - value)
+	ret.Delta = &delta
+	return ret, nil
 }

@@ -40,7 +40,7 @@ func (svc *Processor) CollectMetrics() {
 	metrics := svc.statsStorage.GetMetrics()
 	i, ok := metrics["PollCount"]
 	if ok {
-		svc.statsStorage.SaveMetric("PollCount", model.MetricTypeCounter, i.Value+1)
+		svc.statsStorage.SaveMetric("PollCount", model.MetricTypeCounter, *i.Value+1)
 	} else {
 		svc.statsStorage.SaveMetric("PollCount", model.MetricTypeCounter, 1)
 	}

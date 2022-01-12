@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/rsuchkov/gopractice/api"
+	"github.com/rsuchkov/gopractice/api/v2"
 	"github.com/rsuchkov/gopractice/service/serverstats"
 	"github.com/rsuchkov/gopractice/storage/memory"
 )
@@ -30,6 +31,7 @@ func main() {
 		return
 	}
 	r := api.NewRouter(svc)
+	r.Mount("/", v2.NewRouter(svc))
 
 	server := &http.Server{
 		Addr:    addr,

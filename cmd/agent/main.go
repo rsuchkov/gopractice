@@ -83,7 +83,7 @@ func main() {
 
 					if err != nil {
 						log.Println(err)
-						log.Println("Failed to send", v.Name)
+						log.Println("Failed to send", v.ID)
 
 					}
 				}

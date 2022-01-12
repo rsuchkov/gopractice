@@ -3,8 +3,8 @@ package serverstats
 import "github.com/rsuchkov/gopractice/model"
 
 type StorageExpected interface {
-	SaveMetric(string, model.MetricType, float64)
+	SaveMetric(string, model.MType, float64) (model.Metric, error)
 	GetMetrics() map[string]model.Metric
-	GetMetric(string, model.MetricType) (model.Metric, bool)
-	IncMetric(string, model.MetricType, float64) error
+	GetMetric(string, model.MType) (model.Metric, bool)
+	IncMetric(string, model.MType, float64) (model.Metric, error)
 }

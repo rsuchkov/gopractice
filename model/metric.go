@@ -2,20 +2,20 @@ package model
 
 import "fmt"
 
-type MetricType string
+type MType string
 
 const (
-	MetricTypeGauge   MetricType = "gauge"
-	MetricTypeCounter MetricType = "counter"
+	MetricTypeGauge   MType = "gauge"
+	MetricTypeCounter MType = "counter"
 )
 
 // String implements fmt.Stringer interface.
-func (s MetricType) String() string {
+func (s MType) String() string {
 	return string(s)
 }
 
 // Validate performs enum validation.
-func (s MetricType) Validate() error {
+func (s MType) Validate() error {
 	switch s {
 	case MetricTypeGauge, MetricTypeCounter:
 		return nil
@@ -25,7 +25,8 @@ func (s MetricType) Validate() error {
 }
 
 type Metric struct {
-	Name       string
-	MetricType MetricType
-	Value      float64
+	ID    string   `json:"id"`
+	MType MType    `json:"type"`
+	Delta *int64   `json:"delta,omitempty"`
+	Value *float64 `json:"value,omitempty"`
 }

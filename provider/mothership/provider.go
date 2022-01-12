@@ -2,6 +2,7 @@ package mothership
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -31,23 +32,29 @@ func New(serverURI string) (*Provider, error) {
 }
 
 func (p *Provider) SendMetric(metric model.Metric) (retErr error) {
-	data := url.Values{}
+	data, err := json.Marshal(metric)
+	if err != nil {
+		return err
+	}
 
 	serverAPI, err := url.Parse(p.serverURI)
 	if err != nil {
 		return fmt.Errorf("incorrect server uri: %s", p.serverURI)
 	}
 
-	endpoint := fmt.Sprintf("update/%s/%s/%f", metric.MetricType, metric.Name, metric.Value)
+	//endpoint := fmt.Sprintf("update/%s/%s/%f", metric.MType, metric.ID, *metric.Value)
+	endpoint := "update/"
 	serverAPI.Path = path.Join(serverAPI.Path, endpoint)
 
-	request, err := http.NewRequest(http.MethodPost, serverAPI.String(), bytes.NewBufferString(data.Encode()))
+	request, err := http.NewRequest(http.MethodPost, serverAPI.String(), bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
 
-	request.Header.Add("application-type", "text/plain")
-	request.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+	//request.Header.Add("application-type", "text/plain")
+
+	request.Header.Add("application-type", "application/json")
+	request.Header.Add("Content-Length", strconv.Itoa(len(data)))
 	response, err := p.client.Do(request)
 	if err != nil {
 		return err
@@ -56,7 +63,7 @@ func (p *Provider) SendMetric(metric model.Metric) (retErr error) {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("statusCode received (%d), but (%d) expected", response.StatusCode, http.StatusOK)
+		return fmt.Errorf("POST %s statusCode received (%d), but (%d) expected", serverAPI.String(), response.StatusCode, http.StatusOK)
 	}
 
 	return nil

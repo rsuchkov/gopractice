@@ -14,7 +14,7 @@ import (
 
 func UpdateMetricHandler(svc *serverstats.Processor, w http.ResponseWriter, r *http.Request) {
 
-	mtype, name := model.MetricType(chi.URLParam(r, "mtype")), chi.URLParam(r, "mname")
+	mtype, name := model.MType(chi.URLParam(r, "mtype")), chi.URLParam(r, "mname")
 	value, err := strconv.ParseFloat(chi.URLParam(r, "value"), 64)
 	if err != nil {
 		http.Error(w, "Wrong metric value", http.StatusBadRequest)
@@ -29,7 +29,7 @@ func UpdateMetricHandler(svc *serverstats.Processor, w http.ResponseWriter, r *h
 }
 
 func GetMetricHandler(svc *serverstats.Processor, w http.ResponseWriter, r *http.Request) {
-	mtype, name := model.MetricType(chi.URLParam(r, "mtype")), chi.URLParam(r, "mname")
+	mtype, name := model.MType(chi.URLParam(r, "mtype")), chi.URLParam(r, "mname")
 	v, err := svc.GetMetric(name, mtype)
 	if err != nil {
 		http.Error(w, "Doesn't exist", http.StatusNotFound)
